@@ -1,6 +1,6 @@
 ---
 name: sx-git-acp
-description: "一键 git add-commit-push。自动生成符合 Conventional Commits 规范的中文 commit message，检测不该提交的文件（二进制、node_modules、dist 等），对 main/master 分支 push 有保护。触发词：提交代码、推一下、acp、提交并推送、commit and push、git 提交。"
+description: "一键 git add-commit-push。智能分析 diff 将不相关变更拆分为多次 commit 后统一 push，自动生成符合 Conventional Commits 规范的中文 commit message，检测不该提交的文件（二进制、node_modules、dist 等），对 main/master 分支 push 有保护。触发词：提交代码、推一下、acp、提交并推送、commit and push、git 提交。"
 ---
 
 # sx-git-acp
@@ -48,18 +48,65 @@ file --mime-type <filepath>
 
 等待用户选择后再继续。
 
-### Step 4: git add
+### Step 4: 智能分组（核心）
 
-只添加通过检查的文件：
-```bash
-git add <file1> <file2> ...
+对通过检查的文件，运行 `git diff` 分析每个文件的变更内容，按以下规则将文件分组为多个 commit：
+
+**分组策略：**
+
+1. **按变更类型分组** — 不同 type 的变更必须分开：
+   - 新功能（feat）和 bug 修复（fix）不混在一起
+   - 文档变更（docs）单独一组
+   - 测试变更（test）单独一组
+   - 配置/依赖变更（chore/build/ci）单独一组
+   - 重构（refactor）单独一组
+
+2. **按模块/功能分组** — 同一 type 但不同模块的变更也应分开：
+   - 不同目录下的独立功能分开提交
+   - 同一功能涉及的多个文件（如组件 + 测试 + 样式）归为一组
+
+3. **关联文件归为一组** — 以下情况视为同一组：
+   - 同一模块下的实现文件 + 对应测试文件
+   - 组件文件 + 其样式文件
+   - 接口定义 + 实现
+   - 配置文件的相关联修改（如 package.json + lock 文件）
+
+**判断是否需要拆分的信号：**
+- 变更文件 > 5 个且涉及多个不相关模块 → 大概率需要拆分
+- 变更文件 ≤ 3 个且都在同一目录 → 通常不需要拆分
+- 同时有 feat 和 fix 类型的变更 → 必须拆分
+- 同时有源码变更和纯文档变更 → 应该拆分
+
+**分组结果展示：**
+将分组方案展示给用户确认，格式如：
+```
+检测到 3 组独立变更，建议分批提交：
+
+[1] feat(auth): 添加登录功能
+    - src/auth/login.ts
+    - src/auth/login.test.ts
+
+[2] fix(api): 修复请求超时问题
+    - src/api/client.ts
+
+[3] docs: 更新 README
+    - README.md
 ```
 
-### Step 5: 生成 commit message
+用户可以：
+- 确认分组方案，按顺序提交
+- 调整分组（合并某些组或重新拆分）
+- 选择全部合为一次提交
 
-分析暂存区的变更内容（`git diff --cached`），生成 commit message：
+### Step 5: 逐组 add + commit
 
-**格式：**
+对每一组执行：
+
+1. `git add <该组的文件列表>`
+2. 分析该组的 diff（`git diff --cached`），生成 commit message
+3. `git commit -m "<message>"`
+
+**Commit message 格式：**
 ```
 type(scope): 中文描述
 
@@ -87,13 +134,7 @@ type(scope): 中文描述
 - 中文，简洁，不超过 50 字符
 - 用祈使语气（添加、修复、重构、更新）
 
-### Step 6: git commit
-
-```bash
-git commit -m "<生成的 message>"
-```
-
-### Step 7: Push 智能判断
+### Step 6: Push 智能判断（所有 commit 完成后统一 push）
 
 检查当前分支：
 - **main/master 分支** → 警告用户"当前在 main/master 分支上，直接 push 可能影响生产环境"，询问是否继续
