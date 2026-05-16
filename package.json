@@ -1,0 +1,13 @@
+{
+  "name": "@openpjc/skills",
+  "version": "0.1.0",
+  "description": "AI tool skills collection - auto-installs to Claude Code, Codex, etc.",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "test": "node --test tests/"
+  },
+  "files": ["skills/", "scripts/"],
+  "keywords": ["claude", "codex", "ai-skills", "git"],
+  "author": "openpjc",
+  "license": "MIT"
+}
