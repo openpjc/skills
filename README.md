@@ -16,6 +16,8 @@ npm install -g @openpjc/skills
 |------|------------|
 | Claude Code | `~/.claude/skills/` |
 | Codex | `~/.codex/skills/` |
+| Trae | `~/.trae/skills/` |
+| Trae CN | `~/.trae-cn/skills/` |
 
 ## 包含的 Skills
 

@@ -5,6 +5,8 @@ const os = require('node:os');
 const TOOLS = [
   { name: 'Claude Code', skillsDir: path.join(os.homedir(), '.claude', 'skills') },
   { name: 'Codex', skillsDir: path.join(os.homedir(), '.codex', 'skills') },
+  { name: 'Trae', skillsDir: path.join(os.homedir(), '.trae', 'skills') },
+  { name: 'Trae CN', skillsDir: path.join(os.homedir(), '.trae-cn', 'skills') },
 ];
 
 function detectTools() {
